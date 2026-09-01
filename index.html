@@ -762,14 +762,18 @@
         });
         clearTimeout(timer);
         if (!res.ok) throw new Error('signup request failed');
-        form.hidden = true;
+        form.reset();
         msg.textContent = form.dataset.success || "You're on the list — we'll email you when OptionYield launches.";
+        msg.classList.remove('err');
         msg.classList.add('ok');
       } catch {
+        msg.innerHTML = 'That didn\'t go through — <a href="mailto:info@optionyield.app?subject=Add%20me%20to%20the%20OptionYield%20launch%20list">email us</a> and we\'ll add you manually.';
+        msg.classList.remove('ok');
+        msg.classList.add('err');
+      } finally {
+        // Always settle back to "Notify me" — success or failure
         btn.disabled = false;
         btn.textContent = label;
-        msg.innerHTML = 'That didn\'t go through — <a href="mailto:info@optionyield.app?subject=Add%20me%20to%20the%20OptionYield%20launch%20list">email us</a> and we\'ll add you manually.';
-        msg.classList.add('err');
       }
     });
   });
