@@ -1,0 +1,8 @@
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+
+# Scratch artifacts from logo preview runs
+_preview*

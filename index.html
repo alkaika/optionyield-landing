@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OptionYield — Covered calls &amp; cash-secured puts, decoded</title>
+<meta name="description" content="OptionYield scans the live options chain for covered-call and cash-secured-put opportunities that match your yield and OTM criteria — and shows you the exact math behind every contract.">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<style>
+  /* ─── Design tokens (mirrors src/theme/ThemeContext.tsx) ─────────────── */
+  :root {
+    --bg: #0F0F12;
+    --surface: #16161C;
+    --elevated: #1C1C24;
+    --border: #22222B;
+    --border-subtle: #2C2C35;
+    --text: #FFFFFF;
+    --text-2: #8E8E93;
+    --muted: #555555;
+    --accent: #00E676;
+    --accent-contrast: #07130B;
+    --accent-dim: rgba(0, 230, 118, 0.12);
+    --accent-faint: rgba(0, 230, 118, 0.07);
+    --blue: #29B6F6;
+    --blue-dim: rgba(41, 182, 246, 0.12);
+    --red: #EF5350;
+    --red-dim: rgba(239, 83, 80, 0.12);
+    --selected-bg: #132219;
+    --nav-bg: rgba(15, 15, 18, 0.78);
+    --glow: rgba(0, 230, 118, 0.16);
+    --shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    --btn-bg: #1C1C24;
+    --btn-border: #2C2C35;
+  }
+  html[data-theme="light"] {
+    --bg: #F4F5F7;
+    --surface: #FFFFFF;
+    --elevated: #F0F1F3;
+    --border: #E0E2E7;
+    --border-subtle: #EAECF0;
+    --text: #1A1D20;
+    --text-2: #626D7A;
+    --muted: #9BA3AF;
+    --accent: #00A846;
+    --accent-contrast: #FFFFFF;
+    --accent-dim: rgba(0, 200, 83, 0.10);
+    --accent-faint: rgba(0, 200, 83, 0.06);
+    --blue: #0277BD;
+    --blue-dim: rgba(2, 119, 189, 0.10);
+    --red: #C62828;
+    --red-dim: rgba(198, 40, 40, 0.08);
+    --selected-bg: #E8F5E9;
+    --nav-bg: rgba(244, 245, 247, 0.82);
+    --glow: rgba(0, 200, 83, 0.18);
+    --shadow: 0 24px 64px rgba(26, 29, 32, 0.12);
+    --btn-bg: #FFFFFF;
+    --btn-border: #E0E2E7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  ::selection { background: var(--accent); color: var(--accent-contrast); }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* ─── Ambient background ─────────────────────────────────────────────── */
+  .bg-fx {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 42% at 72% -6%, var(--accent-faint), transparent 62%),
+      radial-gradient(ellipse 42% 34% at 8% 12%, var(--blue-dim), transparent 65%);
+  }
+  .bg-grid {
+    position: fixed; top: 0; left: 0; right: 0; height: 640px; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px;
+    opacity: 0.35;
+    -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, black 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, black 30%, transparent 75%);
+  }
+
+  /* ─── Nav ────────────────────────────────────────────────────────────── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--nav-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .brand { display: flex; align-items: center; }
+  .brand-logo { height: 38px; width: auto; display: block; }
+  .foot-brand .brand-logo { height: 46px; }
+  .logo-light { display: none; }
+  html[data-theme="light"] .logo-dark { display: none; }
+  html[data-theme="light"] .logo-light { display: block; }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { color: var(--text-2); font-size: 14px; font-weight: 500; transition: color 0.15s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-actions { display: flex; align-items: center; gap: 12px; }
+  .theme-toggle {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border-subtle);
+    color: var(--text-2); display: grid; place-items: center;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  html[data-theme="light"] .icon-moon { display: block; }
+  html[data-theme="light"] .icon-sun { display: none; }
+  .icon-moon { display: none; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 18px; border-radius: 12px;
+    font-size: 14px; font-weight: 700;
+    border: 1px solid transparent;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent); color: var(--accent-contrast);
+    box-shadow: 0 0 24px var(--glow);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 32px var(--glow); }
+  .btn-ghost {
+    background: var(--btn-bg); color: var(--text); border-color: var(--btn-border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); }
+  .btn-lg { padding: 14px 26px; font-size: 15px; border-radius: 14px; }
+
+  /* ─── Hero ───────────────────────────────────────────────────────────── */
+  .hero { padding: 88px 0 40px; }
+  .hero-grid {
+    display: grid; grid-template-columns: 1.05fr 0.95fr;
+    gap: 56px; align-items: center;
+  }
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 999px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.55); }
+    60% { box-shadow: 0 0 0 7px rgba(0, 230, 118, 0); }
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 5.2vw, 3.65rem);
+    font-weight: 800; letter-spacing: -0.03em; line-height: 1.06;
+    margin-bottom: 20px;
+  }
+  .hero h1 .gr { color: var(--accent); }
+  .hero .sub {
+    font-size: 1.14rem; color: var(--text-2);
+    max-width: 33rem; margin-bottom: 32px;
+  }
+  .store-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+  .store-btn {
+    display: inline-flex; align-items: center; gap: 11px;
+    padding: 11px 20px; border-radius: 13px;
+    background: var(--btn-bg); border: 1px solid var(--btn-border);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .store-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .store-btn small { display: block; font-size: 10px; color: var(--text-2); letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.2; }
+  .store-btn strong { display: block; font-size: 15.5px; font-weight: 700; line-height: 1.25; }
+  .hero-note { font-size: 13px; color: var(--muted); }
+
+  /* ─── Phone mockup (recreated Dashboard UI) ──────────────────────────── */
+  .phone-wrap { display: flex; justify-content: center; position: relative; }
+  .phone-halo {
+    position: absolute; inset: 8% 4%;
+    background: radial-gradient(ellipse at center, var(--glow), transparent 68%);
+    filter: blur(30px); z-index: 0;
+  }
+  .phone-shot {
+    position: relative; z-index: 1;
+    width: 320px;
+    border-radius: 30px;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow), 0 0 0 8px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+    animation: float 7s ease-in-out infinite;
+  }
+  .phone-shot img { display: block; width: 100%; height: auto; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .phone-shot { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+  /* ─── Stats bar ──────────────────────────────────────────────────────── */
+  .stats-bar { border-block: 1px solid var(--border); background: var(--surface); margin-top: 56px; }
+  .stats-inner {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+  }
+  .stat {
+    padding: 26px 20px; text-align: center;
+  }
+  .stat + .stat { border-left: 1px solid var(--border); }
+  .stat .v { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
+  .stat .k { font-size: 12px; color: var(--text-2); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+
+  /* ─── Sections ───────────────────────────────────────────────────────── */
+  section { padding: 96px 0; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .sec-head { max-width: 40rem; margin-bottom: 52px; }
+  .sec-head h2 {
+    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+    font-weight: 800; letter-spacing: -0.025em; line-height: 1.12;
+    margin-bottom: 12px;
+  }
+  .sec-head p { color: var(--text-2); font-size: 1.06rem; }
+  .sec-head.center { margin-inline: auto; text-align: center; }
+
+  /* ─── Features ───────────────────────────────────────────────────────── */
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 26px;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .feature:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+  .f-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: var(--accent-dim); color: var(--accent);
+    display: grid; place-items: center; margin-bottom: 16px;
+  }
+  .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 7px; letter-spacing: -0.01em; }
+  .feature p { font-size: 13.5px; color: var(--text-2); }
+
+  /* ─── How it works ───────────────────────────────────────────────────── */
+  .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: step; }
+  .step {
+    position: relative;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 26px;
+  }
+  .step-num {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-contrast);
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 15px; margin-bottom: 16px;
+    box-shadow: 0 0 20px var(--glow);
+  }
+  .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 7px; }
+  .step p { font-size: 13.5px; color: var(--text-2); }
+
+  /* ─── Math / transparency ────────────────────────────────────────────── */
+  .math-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .formula-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .formula-card .nm { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .formula-card .fx {
+    font-family: "SF Mono", ui-monospace, "Cascadia Code", Consolas, Menlo, monospace;
+    font-size: 13px; color: var(--text);
+    background: var(--elevated); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    white-space: nowrap; overflow-x: auto;
+  }
+  .formula-card .ds { font-size: 12.5px; color: var(--text-2); }
+
+  /* ─── FAQ ────────────────────────────────────────────────────────────── */
+  .faq-list { max-width: 46rem; margin: 0 auto; }
+  details {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+  }
+  details[open] { border-color: var(--accent); }
+  summary {
+    list-style: none; cursor: pointer;
+    padding: 18px 22px;
+    font-weight: 700; font-size: 15px;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: "+"; font-size: 20px; font-weight: 600; color: var(--accent);
+    transition: transform 0.2s; flex-shrink: 0;
+  }
+  details[open] summary::after { transform: rotate(45deg); }
+  details .ans { padding: 0 22px 20px; color: var(--text-2); font-size: 14px; }
+
+  /* ─── Final CTA ──────────────────────────────────────────────────────── */
+  .cta-final { padding: 0 0 110px; }
+  .cta-box {
+    position: relative; overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 24px;
+    padding: 72px 32px;
+    text-align: center;
+  }
+  .cta-box::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 55% 70% at 50% 115%, var(--accent-faint), transparent 70%);
+    pointer-events: none;
+  }
+  .cta-box h2 { font-size: clamp(1.8rem, 3.6vw, 2.5rem); font-weight: 800; letter-spacing: -0.025em; margin-bottom: 14px; }
+  .cta-box p { color: var(--text-2); max-width: 30rem; margin: 0 auto 30px; }
+  .cta-box .store-row { justify-content: center; margin-bottom: 0; }
+
+  /* ─── Footer ─────────────────────────────────────────────────────────── */
+  footer { border-top: 1px solid var(--border); background: var(--surface); padding: 56px 0 40px; }
+  .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+  .foot-brand p { color: var(--text-2); font-size: 13.5px; max-width: 22rem; margin-top: 12px; }
+  .foot-col h4 {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-2); margin-bottom: 14px;
+  }
+  .foot-col a { display: block; font-size: 14px; color: var(--text-2); margin-bottom: 10px; }
+  .foot-col a:hover { color: var(--accent); }
+  .disclaimer {
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg);
+    padding: 18px 20px;
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+  }
+  .disclaimer b { color: var(--text-2); }
+  .foot-bottom {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin-top: 28px; font-size: 12.5px; color: var(--muted);
+  }
+
+  /* ─── Reveal on scroll ───────────────────────────────────────────────── */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ─── Responsive ─────────────────────────────────────────────────────── */
+  @media (max-width: 980px) {
+    .hero { padding-top: 56px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 64px; }
+    .hero .sub { max-width: none; }
+    .features-grid, .how-grid { grid-template-columns: 1fr 1fr; }
+    .math-grid { grid-template-columns: 1fr; }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+    .nav-links { display: none; }
+  }
+  @media (max-width: 620px) {
+    .features-grid, .how-grid { grid-template-columns: 1fr; }
+    .stats-inner { grid-template-columns: 1fr; }
+    .stat + .stat { border-left: none; border-top: 1px solid var(--border); }
+    section { padding: 72px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-fx"></div>
+<div class="bg-grid"></div>
+
+<!-- ─── Nav ──────────────────────────────────────────────────────────── -->
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top" aria-label="OptionYield home">
+      <img class="brand-logo logo-dark" src="logo-dark.png" alt="OptionYield">
+      <img class="brand-logo logo-light" src="logo-light.png" alt="OptionYield">
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#math">The math</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+        </svg>
+      </button>
+      <a class="btn btn-primary" href="#download">Get the app</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ─── Hero ─────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="live-badge"><span class="live-dot"></span> Live options data · ~15s refresh</span>
+        <h1>High-yield option trades, <span class="gr">found &amp; understood.</span></h1>
+        <p class="sub">
+          OptionYield scans the live options chain for covered-call and cash-secured-put
+          opportunities that match your yield and OTM criteria — then shows you the
+          exact math behind every single contract. No black boxes, no paywalled formulas.
+        </p>
+        <div class="store-row" id="download">
+          <a class="store-btn" href="#" aria-label="Download on the App Store">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            <span><small>Download on the</small><strong>App Store</strong></span>
+          </a>
+          <a class="store-btn" href="#" aria-label="Get it on Google Play">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 1.8 13.7 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1zM15.1 13.4l2.6 2.6-11.5 6.6 8.9-9.2zM20.6 10.8c.8.5.8 1.9 0 2.4l-2.2 1.3-2.9-2.5 2.9-2.5 2.2 1.3zM6.2 1.4l11.5 6.6-2.6 2.6-8.9-9.2z"/></svg>
+            <span><small>Get it on</small><strong>Google Play</strong></span>
+          </a>
+        </div>
+        <p class="hero-note">Free to start · Live quotes, transparent math · iOS &amp; Android</p>
+      </div>
+
+      <!-- Phone: real app screenshot -->
+      <div class="phone-wrap">
+        <div class="phone-halo"></div>
+        <div class="phone-shot">
+          <img src="app-screenshot.jpg" alt="OptionYield app — Apple Inc. dashboard with a live spot price, 22.6% annual yield and a selected covered-call contract">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Stats bar ────────────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="container stats-inner">
+      <div class="stat"><div class="v num">~15s</div><div class="k">Live quote refresh</div></div>
+      <div class="stat"><div class="v">100%</div><div class="k">Transparent yield math</div></div>
+      <div class="stat"><div class="v">2</div><div class="k">Strategies: calls &amp; puts</div></div>
+    </div>
+  </div>
+
+  <!-- ─── Features ─────────────────────────────────────────────────────── -->
+  <section id="features">
+    <div class="container">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Features</span>
+        <h2>Everything between “which contract?” and “is it a good trade?”</h2>
+        <p>Built mobile-first for income investors who write covered calls and cash-secured puts — with real-time data and nothing hidden.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature reveal">
+          <div class="f-icon">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v3l2 2"/></svg>
+          </div>
+          <h3>Live Yield Scanner</h3>
+          <p>Filter the entire chain by expiry, side, minimum annualized yield and minimum OTM% — with an optional 30-day high/low boundary rule. Results refresh on a live heartbeat, no pull-to-refresh needed.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="f-icon">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.5" fill="currentColor"/></svg>
+          </div>
+          <h3>Focus Mode</h3>
+          <p>Tap any contract for a full yield breakdown — static return, annualized yield, downside protection and max profit — computed from real market data with explicit validation.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="f-icon">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+          </div>
+          <h3>Live, always fresh</h3>
+          <p>Spot prices and option quotes stream in over a realtime relay and refresh on a ~15-second heartbeat — no pull-to-refresh, no stale numbers.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="f-icon">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01" stroke-width="3"/></svg>
+          </div>
+          <h3>Reorderable Watchlist</h3>
+          <p>Keep your income engine organized. Drag to reorder, search any ticker with instant autocomplete, and your watchlist persists between sessions.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="f-icon">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Saved Scans</h3>
+          <p>Found a winner? Save the whole scan and deep-link back into the dashboard later — pre-loaded with the same ticker, strategy and expiry.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="f-icon">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <h3>Honest, labeled data</h3>
+          <p>Hybrid bid/ask estimates are clearly tagged “ESTIMATED” — never silently fabricated. When data is unavailable, you get a real error banner, not a fake number.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── How it works ─────────────────────────────────────────────────── -->
+  <section id="how" style="padding-top: 0;">
+    <div class="container">
+      <div class="sec-head center reveal">
+        <span class="eyebrow">How it works</span>
+        <h2>From watchlist to trade plan in three steps</h2>
+      </div>
+      <div class="how-grid">
+        <div class="step reveal">
+          <div class="step-num">1</div>
+          <h3>Pick your tickers</h3>
+          <p>Search any stock with instant autocomplete, stream the live spot price, and keep a reorderable watchlist of your income candidates.</p>
+        </div>
+        <div class="step reveal">
+          <div class="step-num">2</div>
+          <h3>Set your criteria</h3>
+          <p>Choose expiry, calls or puts, minimum annualized yield, minimum OTM% and the optional 30-day boundary rule. Run the scanner.</p>
+        </div>
+        <div class="step reveal">
+          <div class="step-num">3</div>
+          <h3>Review the math &amp; save</h3>
+          <p>Open Focus Mode on any contract to see the full yield breakdown. Save the scan and come back to it any time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── The math ─────────────────────────────────────────────────────── -->
+  <section id="math" style="padding-top: 0;">
+    <div class="container">
+      <div class="sec-head reveal">
+        <span class="eyebrow">The math</span>
+        <h2>Every number, out in the open</h2>
+        <p>Most tools hide the formulas behind a paywall. We print them. Here is exactly how OptionYield computes the metrics on every contract.</p>
+      </div>
+      <div class="math-grid">
+        <div class="formula-card reveal">
+          <span class="nm">Static return</span>
+          <code class="fx num">premium ÷ stockPrice × 100</code>
+          <span class="ds">The flat yield if assigned today.</span>
+        </div>
+        <div class="formula-card reveal">
+          <span class="nm">Annualized yield</span>
+          <code class="fx num">staticReturn × (365 ÷ DTE)</code>
+          <span class="ds">Makes 7-day and 45-day trades comparable.</span>
+        </div>
+        <div class="formula-card reveal">
+          <span class="nm">Max profit %</span>
+          <code class="fx num">(capitalGain + premium) ÷ stockPrice × 100</code>
+          <span class="ds">Total upside including price appreciation to strike.</span>
+        </div>
+        <div class="formula-card reveal">
+          <span class="nm">OTM %</span>
+          <code class="fx num">distance from spot to strike, by side</code>
+          <span class="ds">Your downside protection buffer on a covered call.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FAQ ──────────────────────────────────────────────────────────── -->
+  <section id="faq" style="padding-top: 0;">
+    <div class="container">
+      <div class="sec-head center reveal">
+        <span class="eyebrow">FAQ</span>
+        <h2>Questions, answered</h2>
+      </div>
+      <div class="faq-list reveal">
+        <details>
+          <summary>What strategies does OptionYield support?</summary>
+          <p class="ans">Covered calls and cash-secured puts — the two core income strategies. The scanner and dashboard are purpose-built around them, including per-side OTM% and the optional 30-day high/low boundary rule.</p>
+        </details>
+        <details>
+          <summary>How fresh is the market data?</summary>
+          <p class="ans">Spot prices and option quotes stream to the app over a realtime relay and refresh on roughly a 15-second heartbeat — no manual pull-to-refresh. When a quote is a hybrid estimate, it is explicitly labeled “ESTIMATED”.</p>
+        </details>
+        <details>
+          <summary>How is annualized yield calculated?</summary>
+          <p class="ans">Static return (premium ÷ stock price) is scaled by 365 ÷ days-to-expiry. That makes short-dated and long-dated contracts directly comparable. The full formula for every metric is shown in the app — nothing is hidden.</p>
+        </details>
+        <details>
+          <summary>Is this financial advice?</summary>
+          <p class="ans">No. OptionYield is an informational and educational tool. All metrics are computed from market data to help you do your own analysis. Options trading involves substantial risk — please see the full disclaimer below.</p>
+        </details>
+        <details>
+          <summary>Does it work in light mode?</summary>
+          <p class="ans">Yes — like the app itself, this page ships with a full dark and light theme. Try the toggle in the navigation bar to see it.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Final CTA ────────────────────────────────────────────────────── -->
+  <section class="cta-final" style="padding-top: 0;">
+    <div class="container">
+      <div class="cta-box reveal">
+        <span class="eyebrow">Get started</span>
+        <h2>Stop guessing. Start collecting.</h2>
+        <p>Download OptionYield and see your next covered call or cash-secured put — with the math to back it up.</p>
+        <div class="store-row">
+          <a class="store-btn" href="#">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            <span><small>Download on the</small><strong>App Store</strong></span>
+          </a>
+          <a class="store-btn" href="#">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 1.8 13.7 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1zM15.1 13.4l2.6 2.6-11.5 6.6 8.9-9.2zM20.6 10.8c.8.5.8 1.9 0 2.4l-2.2 1.3-2.9-2.5 2.9-2.5 2.2 1.3zM6.2 1.4l11.5 6.6-2.6 2.6-8.9-9.2z"/></svg>
+            <span><small>Get it on</small><strong>Google Play</strong></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ─── Footer ─────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top" aria-label="OptionYield home">
+          <img class="brand-logo logo-dark" src="logo-dark.png" alt="OptionYield">
+          <img class="brand-logo logo-light" src="logo-light.png" alt="OptionYield">
+        </a>
+        <p>The mobile-first way to find high-yield option opportunities and understand the risk/reward behind every contract.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#math">The math</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="foot-col">
+        <h4>Legal</h4>
+        <a href="#">Privacy policy</a>
+        <a href="#">Terms of service</a>
+        <a href="#">Disclosures</a>
+      </div>
+    </div>
+    <div class="disclaimer">
+      <b>Disclaimer:</b> OptionYield is an informational tool only and does not constitute investment advice,
+      a recommendation, or an offer to buy or sell any security. Options trading involves substantial risk
+      and is not suitable for all investors. Metrics shown are computed from market data and may include
+      labeled estimates; past performance and implied yields are not guarantees of future results. Always
+      do your own research and consult a licensed financial advisor before trading.
+    </div>
+    <div class="foot-bottom">
+      <span>© <span id="year">2026</span> OptionYield. All rights reserved.</span>
+      <span class="num">Data refreshes every ~15 seconds · ESTIMATED quotes are labeled</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ─── Theme toggle (mirrors the app's darkTheme/lightTheme) ──────────────
+  const root = document.documentElement;
+  const saved = localStorage.getItem('my-yield-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('my-yield-theme', next);
+  });
+
+  // ─── Reveal on scroll ────────────────────────────────────────────────────
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+  // ─── Footer year ─────────────────────────────────────────────────────────
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
