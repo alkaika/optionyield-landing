@@ -221,6 +221,14 @@
     position: absolute; left: -9999px; width: 1px; height: 1px;
     opacity: 0; pointer-events: none;
   }
+  /* Compact navbar variant */
+  .signup-nav { gap: 8px; }
+  .signup-nav input[type="email"] {
+    flex: none; width: 210px;
+    padding: 8px 12px; font-size: 13.5px; border-radius: 10px;
+  }
+  .signup-nav .btn { padding: 8px 14px; font-size: 13.5px; border-radius: 10px; }
+  .nav-signup-msg { font-size: 13px; white-space: nowrap; margin: 0; }
 
   /* ─── Phone mockup (recreated Dashboard UI) ──────────────────────────── */
   .phone-wrap { display: flex; justify-content: center; position: relative; }
@@ -405,6 +413,7 @@
     .math-grid { grid-template-columns: 1fr; }
     .foot-grid { grid-template-columns: 1fr 1fr; }
     .nav-links { display: none; }
+    .nav-actions .signup, .nav-signup-msg { display: none; }
   }
   @media (max-width: 620px) {
     .features-grid, .how-grid { grid-template-columns: 1fr; }
@@ -442,7 +451,12 @@
           <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
         </svg>
       </button>
-      <a class="btn btn-primary" href="#waitlist">Join the waitlist</a>
+      <form class="signup signup-nav" action="https://formsubmit.co/info@optionyield.app" method="POST" data-success="You're on the list!">
+        <input type="text" name="honey" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="email" name="email" placeholder="you@email.com" autocomplete="email" required aria-label="Email address">
+        <button class="btn btn-primary" type="submit">Notify me</button>
+      </form>
+      <p class="signup-msg nav-signup-msg" aria-live="polite"></p>
     </div>
   </div>
 </header>
@@ -749,7 +763,7 @@
         clearTimeout(timer);
         if (!res.ok) throw new Error('signup request failed');
         form.hidden = true;
-        msg.textContent = "You're on the list — we'll email you when OptionYield launches.";
+        msg.textContent = form.dataset.success || "You're on the list — we'll email you when OptionYield launches.";
         msg.classList.add('ok');
       } catch {
         btn.disabled = false;
