@@ -107,9 +107,9 @@ def build_logo(theme):
     return out
 
 
-def make_favicon(logo_dark):
-    w, h = logo_dark.size
-    alpha = logo_dark.split()[3].load()
+def make_favicon(logo_light):
+    w, h = logo_light.size
+    alpha = logo_light.split()[3].load()
     # First fully-transparent column run in the left half separates mark from wordmark
     split = None
     run = 0
@@ -121,7 +121,7 @@ def make_favicon(logo_dark):
             break
     if split is None:
         split = h  # fall back to square crop
-    mark = logo_dark.crop((0, 0, split, h))
+    mark = logo_light.crop((0, 0, split, h))
     side = max(mark.size)
     sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     sq.paste(mark, ((side - mark.size[0]) // 2, (side - mark.size[1]) // 2), mark)
@@ -129,7 +129,8 @@ def make_favicon(logo_dark):
     size = 128
     tile = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(tile)
-    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=28, fill=(22, 22, 28, 255))
+    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=28, fill=(255, 255, 255, 255),
+                        outline=(224, 226, 231, 255), width=2)
     inner = int(size * 0.78)
     mark_resized = sq.resize((inner, inner), Image.LANCZOS)
     tile.alpha_composite(mark_resized, ((size - inner) // 2, (size - inner) // 2))
@@ -142,5 +143,5 @@ for theme in ("dark", "light"):
     logo.save(os.path.join(OUT_DIR, f"logo-{theme}.png"))
     print(theme, logo.size)
 
-make_favicon(build_logo("dark"))
+make_favicon(build_logo("light"))
 print("favicon written")
