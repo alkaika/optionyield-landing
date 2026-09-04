@@ -5,6 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OptionYield — Covered calls &amp; cash-secured puts, decoded</title>
 <meta name="description" content="Coming soon for iOS & Android — OptionYield scans the live options chain for covered-call and cash-secured-put opportunities that match your yield and OTM criteria, and shows you the exact math behind every contract. Join the launch list.">
+<link rel="canonical" href="https://optionyield.app/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0F0F12" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F5F7" media="(prefers-color-scheme: light)">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OptionYield">
+<meta property="og:url" content="https://optionyield.app/">
+<meta property="og:title" content="OptionYield — Covered calls & cash-secured puts, decoded">
+<meta property="og:description" content="A mobile covered-call screener and cash-secured-put scanner with live options data and transparent yield math. Join the launch list.">
+<meta property="og:image" content="https://optionyield.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="OptionYield — high-yield option trades, found and understood">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="OptionYield — Covered calls & cash-secured puts, decoded">
+<meta name="twitter:description" content="A mobile covered-call screener and cash-secured-put scanner with live options data and transparent yield math. Join the launch list.">
+<meta name="twitter:image" content="https://optionyield.app/og-image.png">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://optionyield.app/#website",
+      "url": "https://optionyield.app/",
+      "name": "OptionYield",
+      "inLanguage": "en",
+      "publisher": { "@id": "https://optionyield.app/#app" }
+    },
+    {
+      "@type": "MobileApplication",
+      "@id": "https://optionyield.app/#app",
+      "name": "OptionYield",
+      "url": "https://optionyield.app/",
+      "operatingSystem": "iOS, Android",
+      "applicationCategory": "FinanceApplication",
+      "description": "Mobile covered-call screener and cash-secured-put scanner with live options data and transparent yield math.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  ]
+}
+</script>
+
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <style>
@@ -268,6 +318,15 @@
   .stat .v { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); }
   .stat .k { font-size: 12px; color: var(--text-2); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
 
+  /* ─── About copy ────────────────────────────────────────────────────── */
+  .about-copy { max-width: 52rem; }
+  .about-copy p {
+    color: var(--text-2); font-size: 1.04rem; line-height: 1.7;
+    margin-bottom: 16px;
+  }
+  .about-copy p:last-child { margin-bottom: 0; }
+  .about-copy strong { color: var(--text); font-weight: 700; }
+
   /* ─── Sections ───────────────────────────────────────────────────────── */
   section { padding: 96px 0; }
   .eyebrow {
@@ -433,8 +492,8 @@
 <header class="nav">
   <div class="container nav-inner">
     <a class="brand" href="#top" aria-label="OptionYield home">
-      <img class="brand-logo logo-dark" src="logo-dark.png" alt="OptionYield">
-      <img class="brand-logo logo-light" src="logo-light.png" alt="OptionYield">
+      <img class="brand-logo logo-dark" src="logo-dark.png" width="851" height="206" alt="OptionYield">
+      <img class="brand-logo logo-light" src="logo-light.png" width="851" height="206" alt="OptionYield">
     </a>
     <nav class="nav-links">
       <a href="#features">Features</a>
@@ -493,7 +552,7 @@
       <div class="phone-wrap">
         <div class="phone-halo"></div>
         <div class="phone-shot">
-          <img src="app-screenshot.jpg" alt="OptionYield app — Apple Inc. dashboard with a live spot price, 22.6% annual yield and a selected covered-call contract">
+          <img src="app-screenshot.jpg" width="640" height="1387" fetchpriority="high" alt="OptionYield app — Apple Inc. dashboard with a live spot price, 22.6% annual yield and a selected covered-call contract">
         </div>
       </div>
     </div>
@@ -507,6 +566,33 @@
       <div class="stat"><div class="v">2</div><div class="k">Strategies: calls &amp; puts</div></div>
     </div>
   </div>
+
+  <!-- ─── About ────────────────────────────────────────────────────────── -->
+  <section id="about">
+    <div class="container">
+      <div class="sec-head reveal">
+        <span class="eyebrow">About</span>
+        <h2>What is OptionYield?</h2>
+      </div>
+      <div class="about-copy reveal">
+        <p>
+          OptionYield is a mobile <strong>options income app</strong> for retail investors
+          who write <strong>covered calls</strong> and <strong>cash-secured puts</strong>.
+          Instead of paging through slow chain viewers, you get a purpose-built
+          <strong>covered call screener</strong> and <strong>cash-secured put scanner</strong>
+          that filter the live options market by minimum annualized yield and out-of-the-money
+          buffer — the two numbers that decide whether a trade is worth writing.
+        </p>
+        <p>
+          Every contract comes with a transparent breakdown: static return, annualized yield,
+          downside protection and max profit, computed from real-time quotes with the formula
+          shown inline. A reorderable watchlist, saved scans and honest “ESTIMATED” labeling on
+          hybrid quotes round out a tool built for running an <strong>options income
+          strategy</strong> from your phone — with the math to back every number.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <!-- ─── Features ─────────────────────────────────────────────────────── -->
   <section id="features">
@@ -693,8 +779,8 @@
     <div class="foot-grid">
       <div class="foot-brand">
         <a class="brand" href="#top" aria-label="OptionYield home">
-          <img class="brand-logo logo-dark" src="logo-dark.png" alt="OptionYield">
-          <img class="brand-logo logo-light" src="logo-light.png" alt="OptionYield">
+          <img class="brand-logo logo-dark" src="logo-dark.png" width="851" height="206" alt="OptionYield">
+          <img class="brand-logo logo-light" src="logo-light.png" width="851" height="206" alt="OptionYield">
         </a>
         <p>The mobile-first way to find high-yield option opportunities and understand the risk/reward behind every contract.</p>
       </div>
