@@ -126,16 +126,9 @@ def make_favicon(logo_light):
     sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     sq.paste(mark, ((side - mark.size[0]) // 2, (side - mark.size[1]) // 2), mark)
 
-    size = 128
-    tile = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(tile)
-    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=28, fill=(255, 255, 255, 255),
-                        outline=(224, 226, 231, 255), width=2)
-    inner = int(size * 0.94)
-    mark_resized = sq.resize((inner, inner), Image.LANCZOS)
-    tile.alpha_composite(mark_resized, ((size - inner) // 2, (size - inner) // 2))
-    tile.resize((64, 64), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon.png"))
-    tile.resize((32, 32), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon-32.png"))
+    # No background tile — the mark itself fills the canvas edge to edge
+    sq.resize((64, 64), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon.png"))
+    sq.resize((32, 32), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon-32.png"))
 
 
 for theme in ("dark", "light"):
