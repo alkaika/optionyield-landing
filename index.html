@@ -160,10 +160,16 @@
   }
   .brand { display: flex; align-items: center; }
   .brand-logo { height: 38px; width: auto; display: block; }
-  .foot-brand .brand-logo { height: 46px; }
-  .logo-light { display: none; }
-  html[data-theme="light"] .logo-dark { display: none; }
-  html[data-theme="light"] .logo-light { display: block; }
+  /* In dark mode the light logo sits on a white app-icon tile so its
+     charcoal elements stay visible against the dark background */
+  html:not([data-theme="light"]) .brand-logo {
+    background: #FFFFFF;
+    border: 1px solid #E0E2E7;
+    border-radius: 11px;
+    padding: 4px 9px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+  .foot-brand .brand-logo { height: 44px; }
   .nav-links { display: flex; align-items: center; gap: 28px; }
   .nav-links a { color: var(--text-2); font-size: 14px; font-weight: 500; transition: color 0.15s; }
   .nav-links a:hover { color: var(--text); }
@@ -494,8 +500,7 @@
 <header class="nav">
   <div class="container nav-inner">
     <a class="brand" href="#top" aria-label="OptionYield home">
-      <img class="brand-logo logo-dark" src="logo-dark.png" width="851" height="206" alt="OptionYield">
-      <img class="brand-logo logo-light" src="logo-light.png" width="851" height="206" alt="OptionYield">
+      <img class="brand-logo" src="logo-light.png" alt="OptionYield">
     </a>
     <nav class="nav-links">
       <a href="#features">Features</a>
@@ -781,8 +786,7 @@
     <div class="foot-grid">
       <div class="foot-brand">
         <a class="brand" href="#top" aria-label="OptionYield home">
-          <img class="brand-logo logo-dark" src="logo-dark.png" width="851" height="206" alt="OptionYield">
-          <img class="brand-logo logo-light" src="logo-light.png" width="851" height="206" alt="OptionYield">
+          <img class="brand-logo" src="logo-light.png" width="851" height="206" alt="OptionYield">
         </a>
         <p>The mobile-first way to find high-yield option opportunities and understand the risk/reward behind every contract.</p>
       </div>
