@@ -127,9 +127,9 @@ def make_favicon(logo_light):
     sq.paste(mark, ((side - mark.size[0]) // 2, (side - mark.size[1]) // 2), mark)
 
     # No background tile — the mark itself fills the canvas edge to edge
-    sq.resize((96, 96), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon-96.png"))
-    sq.resize((64, 64), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon.png"))
-    sq.resize((32, 32), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon-32.png"))
+    sq.resize((96, 96), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon-v2-96.png"))
+    sq.resize((64, 64), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon-v2-64.png"))
+    sq.resize((32, 32), Image.LANCZOS).save(os.path.join(OUT_DIR, "favicon-v2-32.png"))
 
 
 for theme in ("dark", "light"):
