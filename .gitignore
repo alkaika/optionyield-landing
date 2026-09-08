@@ -6,3 +6,6 @@ Desktop.ini
 
 # Scratch artifacts from logo preview runs
 _preview*
+
+# Vectorizer scratch output
+_mark_reference.png
