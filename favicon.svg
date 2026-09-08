@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g transform="translate(0.0,21.6) scale(2.2756)"><defs>
+  <linearGradient id="oyG" gradientUnits="userSpaceOnUse" x1="15" y1="155" x2="210" y2="15">
+    <stop offset="0" stop-color="#067D3A"/>
+    <stop offset="0.5" stop-color="#09B654"/>
+    <stop offset="1" stop-color="#09B654"/>
+  </linearGradient>
+  <mask id="cut">
+    <rect width="225" height="206" fill="#fff"/>
+    <path d="M 0.0 127.5 L 0.5 134.0 L 6.5 150.0 L 10.5 156.0 L 18.0 162.5 L 28.0 167.5 L 37.0 169.5 L 57.0 169.5 L 66.0 167.5 L 97.0 154.5 L 131.0 130.5 L 147.0 116.5 L 170.5 92.0 L 202.0 51.5 L 205.5 54.0 L 212.5 67.0 L 214.5 66.0 L 222.5 12.0 L 222.0 4.5 L 169.0 29.5 L 169.0 31.5 L 184.5 38.0 L 159.5 73.0 L 142.5 93.0 L 119.0 116.5 L 95.0 135.5 L 73.0 147.5 L 55.0 152.5 L 40.0 152.5 L 29.0 149.5 L 14.5 137.0 L 9.5 128.0 L 5.5 114.0 L 6.5 87.0 L 2.5 95.0 L 0.0 109.5 L 7.0 86.5 Z" fill="#000" stroke="#000" stroke-width="9"/>
+  </mask>
+</defs>
+<g fill="#1A1D20" mask="url(#cut)">
+  <circle cx="108.9" cy="95.5" r="74.0" fill="none" stroke="#1A1D20" stroke-width="23.0"/>
+  <rect x="63" y="87" width="29" height="84"/>
+  <rect x="99" y="58" width="27" height="113"/>
+  <rect x="134" y="33" width="13" height="138"/>
+</g>
+<path d="M 0.0 127.5 L 0.5 134.0 L 6.5 150.0 L 10.5 156.0 L 18.0 162.5 L 28.0 167.5 L 37.0 169.5 L 57.0 169.5 L 66.0 167.5 L 97.0 154.5 L 131.0 130.5 L 147.0 116.5 L 170.5 92.0 L 202.0 51.5 L 205.5 54.0 L 212.5 67.0 L 214.5 66.0 L 222.5 12.0 L 222.0 4.5 L 169.0 29.5 L 169.0 31.5 L 184.5 38.0 L 159.5 73.0 L 142.5 93.0 L 119.0 116.5 L 95.0 135.5 L 73.0 147.5 L 55.0 152.5 L 40.0 152.5 L 29.0 149.5 L 14.5 137.0 L 9.5 128.0 L 5.5 114.0 L 6.5 87.0 L 2.5 95.0 L 0.0 109.5 L 7.0 86.5 Z" fill="url(#oyG)"/></g></svg>
