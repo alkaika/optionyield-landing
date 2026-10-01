@@ -9,6 +9,8 @@ no dependencies, no framework.
 | File | Purpose |
 | --- | --- |
 | `index.html` | The entire page: markup, styles, and scripts |
+| `privacy.html` | Privacy Policy (self-contained, shares the site's design tokens) |
+| `terms.html` | Terms of Service (self-contained, shares the site's design tokens) |
 | `logo-dark.png` / `logo-light.png` | Logo recolored for the site's dark/light themes |
 | `favicon.png` / `favicon-32.png` | Browser tab icons (logo mark on a dark tile) |
 | `app-screenshot.jpg` | App screenshot shown in the hero |
